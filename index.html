@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        /* Modal visibility */
+        #modal-backdrop.hidden, #discount-modal-backdrop.hidden { display: none; }
+        .item-row:hover { background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-5xl">
+
+        <!-- Header -->
+        <header class="mb-8 text-center relative">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Quotation Calculator</h1>
+        </header>
+
+        <!-- Quote Details Inputs -->
+        <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Quote Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="clientName" placeholder="Client Name" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="text" id="companyName" placeholder="Company Name" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="text" id="contactNumber" placeholder="Contact Number" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="email" id="contactEmail" placeholder="Contact Email" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="text" id="consultantName" placeholder="Consultant Name" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="date" id="quoteDate" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Left Column: Item Entry -->
+            <div class="md:col-span-1">
+                <div class="bg-white p-6 rounded-xl shadow-md sticky top-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 border-b pb-3 border-gray-200">Add Item(s) to Quote</h2>
+                    <div class="mb-4 relative">
+                        <input type="search" id="itemSearchInput" placeholder="Search for products..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        </div>
+                    </div>
+                    <form id="itemSelectionForm" class="space-y-6">
+                        <div id="software-section">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Software</h3>
+                            <div id="software-items-container" class="space-y-2 max-h-48 overflow-y-scroll border border-gray-200 rounded-lg p-2"></div>
+                        </div>
+                        <div id="main-hardware-section">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Main Hardware</h3>
+                            <div id="main-hardware-items-container" class="space-y-2 max-h-48 overflow-y-scroll border border-gray-200 rounded-lg p-2"></div>
+                        </div>
+                        <div id="supplementary-hardware-section">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Supplementary Hardware</h3>
+                            <div id="supplementary-hardware-items-container" class="space-y-2 max-h-48 overflow-y-scroll border border-gray-200 rounded-lg p-2"></div>
+                        </div>
+                        <div id="services-section">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Services</h3>
+                            <div id="services-items-container" class="space-y-2 max-h-48 overflow-y-scroll border border-gray-200 rounded-lg p-2"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Right Column: Quote Details -->
+            <div class="md:col-span-2">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 border-b pb-3 border-gray-200">Current Quotation</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="w-2/5 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="relative px-4 py-3"><span class="sr-only">Remove</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="quoteItems" class="bg-white divide-y divide-gray-200">
+                                <!-- Initial state is handled by JavaScript -->
+                                <tr id="empty-row"><td colspan="5" class="px-4 py-10 text-center text-gray-500">No items added yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 pt-4 border-t-2 border-dashed border-gray-200">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-2xl font-bold pt-2">
+                                <span class="text-indigo-600">Total</span>
+                                <span id="grandTotal" class="text-indigo-600">RM0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end space-x-3">
+                        <button id="generateQuoteBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Generate Quote</button>
+                        <button id="clearQuoteBtn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600">Clear Quote</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50"><div id="modal" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-auto transform transition-all scale-95 opacity-0"><h3 id="modal-title" class="text-lg font-bold text-gray-900">Confirm Action</h3><p id="modal-message" class="mt-2 text-sm text-gray-600">Are you sure?</p><div class="mt-6 flex justify-end space-x-3"><button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button><button id="modal-confirm-btn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Confirm</button></div></div></div>
+    
+    <!-- Discount Modal -->
+    <div id="discount-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div id="discount-modal" class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-auto transform transition-all scale-95 opacity-0">
+            <h3 id="discount-modal-title" class="text-lg font-bold text-gray-900">Apply Discount</h3>
+            <form id="discount-form" class="space-y-4 mt-4">
+                <input type="text" id="itemDiscountReason" placeholder="Discount Reason (e.g., Promotion)" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <input type="text" id="itemDiscountAmount" placeholder="Amount (e.g., -100 or -10%)" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm">
+                <div class="flex justify-between items-center">
+                    <button type="button" id="discount-modal-remove-btn" class="px-4 py-2 text-sm text-red-600 hover:underline">Remove Discount</button>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="discount-modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Apply</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script type="module">
+        // --- The main application state, stored only in the browser's memory ---
+        let state = { quoteItems: [], details: {} };
+        let editingItemIndex = null;
+
+        // --- PRODUCT CATALOG (Hardcoded) ---
+        const data = {
+            softwarePlans: { 
+                'Starter': { yearly: { id: 'starter_yearly', name: 'Starter (Yearly)', price: 1315.00 }, monthly: { id: 'starter_monthly', name: 'Starter (Monthly)', price: 131.00 } }, 
+                'Advance': { yearly: { id: 'advance_yearly', name: 'Advance (Yearly)', price: 2536.00 }, monthly: { id: 'advance_monthly', name: 'Advance (Monthly)', price: 253.00 } }, 
+                'Pro': { yearly: { id: 'pro_yearly', name: 'Pro (Yearly)', price: 5084.00 }, monthly: { id: 'pro_monthly', name: 'Pro (Monthly)', price: 508.00 } },
+                'Extra Store License': { yearly: { id: 'xtra_store_yearly', name: 'Extra Store License (Yearly)', price: 1518.00 }, monthly: { id: 'xtra_store_monthly', name: 'Extra Store License (Monthly)', price: 151.00 } },
+                'Extra Register License': { yearly: { id: 'xtra_reg_yearly', name: 'Extra Register License (Yearly)', price: 499.00 }, monthly: { id: 'xtra_reg_monthly', name: 'Extra Register License (Monthly)', price: 49.00 } },
+                'Loyalty Bundle': { yearly: { id: 'loyalty_yearly', name: 'Loyalty Bundle (Yearly)', price: 2490.00 }, monthly: { id: 'loyalty_monthly', name: 'Loyalty Bundle (Monthly)', price: 249.00 } },
+                'Membership': { yearly: { id: 'membership_yearly', name: 'Membership (Yearly)', price: 1990.00 }, monthly: { id: 'membership_monthly', name: 'Membership (Monthly)', price: 199.00 } },
+                'Engage': { yearly: { id: 'engage_yearly', name: 'Engage (Yearly)', price: 990.00 }, monthly: { id: 'engage_monthly', name: 'Engage (Monthly)', price: 99.00 } },
+                'KDS': { yearly: { id: 'kds_yearly', name: 'KDS (Yearly)', price: 250.00 }, monthly: { id: 'kds_monthly', name: 'KDS (Monthly)', price: 25.00 } },
+                'NCS': { yearly: { id: 'ncs_yearly', name: 'NCS (Yearly)', price: 250.00 }, monthly: { id: 'ncs_monthly', name: 'NCS (Monthly)', price: 25.00 } }
+            },
+            marketplaceIntegrations: [ { id: 'mp_standard', name: 'Marketplace Integration Standard', price: 1056.00 }, { id: 'mp_advance', name: 'Marketplace Integration Advance', price: 4656.00 } ],
+            mainHardwareItems: [ { id: 'falcon_1', name: 'Falcon 1', price: 1890.00 }, { id: 'sunmi_d3_pro', name: 'Sunmi D3 Pro', price: 1690.00 }, { id: 'sunmi_d3_mini', name: 'Sunmi D3 Mini', price: 1890.00 } ],
+            supplementaryHardwareItems: [ { id: 'swan_1k', name: 'Swan 1K', price: 1400.00 }, { id: 'mi_stick', name: 'Mi Stick', price: 199.00 }, { id: 'table_mount', name: 'Table Mount', price: 50.00 }, { id: 'wall_mount', name: 'Wall Mount', price: 35.00 }, { id: 'thermal_printer', name: 'Thermal Printer', price: 480.00 }, { id: 'bixolon_printer', name: 'Bixolon Printer', price: 900.00 }, { id: 'cash_drawer', name: 'Cash Drawer', price: 260.00 }, { id: 'sunmi_scanner', name: 'Sunmi Scanner', price: 200.00 }, { id: 'webcam', name: 'Webcam', price: 100.00 }, { id: 'tp_link_omada', name: 'TP Link Omada Router', price: 450.00 }, { id: 'network_switch', name: 'Network Switch', price: 149.00 }, { id: 'tp_link_ap', name: 'TP Link Access Point', price: 450.00 } ],
+            serviceItems: [ { id: 'on-site_onboarding', name: 'On-site Onboarding', price: 990.00 }, { id: 'remote_onboarding', name: 'Remote Onboarding', price: 690.00 }, { id: 'delivery_charges', name: 'Delivery Charges', price: 45.00 }],
+        };
+        
+        // --- DOM ELEMENT REFERENCES ---
+        const dom = {
+            itemSearchInput: document.getElementById('itemSearchInput'),
+            selectionForm: document.getElementById('itemSelectionForm'), quoteItemsBody: document.getElementById('quoteItems'), grandTotalEl: document.getElementById('grandTotal'), clearQuoteBtn: document.getElementById('clearQuoteBtn'), generateQuoteBtn: document.getElementById('generateQuoteBtn'), emptyRow: document.getElementById('empty-row'),
+            modalBackdrop: document.getElementById('modal-backdrop'), modal: document.getElementById('modal'), modalTitle: document.getElementById('modal-title'), modalMessage: document.getElementById('modal-message'), modalConfirmBtn: document.getElementById('modal-confirm-btn'), modalCancelBtn: document.getElementById('modal-cancel-btn'),
+            discountModalBackdrop: document.getElementById('discount-modal-backdrop'), discountModal: document.getElementById('discount-modal'), discountForm: document.getElementById('discount-form'), itemDiscountReasonInput: document.getElementById('itemDiscountReason'), itemDiscountAmountInput: document.getElementById('itemDiscountAmount'), discountModalCancelBtn: document.getElementById('discount-modal-cancel-btn'), discountModalRemoveBtn: document.getElementById('discount-modal-remove-btn'),
+            softwareContainer: document.getElementById('software-items-container'), mainHardwareContainer: document.getElementById('main-hardware-items-container'), supplementaryHardwareContainer: document.getElementById('supplementary-hardware-items-container'), servicesContainer: document.getElementById('services-items-container'),
+            clientNameInput: document.getElementById('clientName'), companyNameInput: document.getElementById('companyName'), contactNumberInput: document.getElementById('contactNumber'), contactEmailInput: document.getElementById('contactEmail'), consultantNameInput: document.getElementById('consultantName'), quoteDateInput: document.getElementById('quoteDate'),
+        };
+        
+        // --- UI & UTILITY FUNCTIONS ---
+        const formatCurrency = (num) => new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' }).format(num);
+        const showConfirmationModal = (title, message, onConfirm) => { dom.modalTitle.textContent = title; dom.modalMessage.textContent = message; const newConfirmBtn = dom.modalConfirmBtn.cloneNode(true); dom.modalConfirmBtn.parentNode.replaceChild(newConfirmBtn, dom.modalConfirmBtn); dom.modalConfirmBtn = newConfirmBtn; newConfirmBtn.onclick = () => { onConfirm(); hideModal(dom.modal, dom.modalBackdrop); }; dom.modalCancelBtn.onclick = () => hideModal(dom.modal, dom.modalBackdrop); dom.modalBackdrop.classList.remove('hidden'); setTimeout(() => dom.modal.classList.remove('scale-95', 'opacity-0'), 10); };
+        const hideModal = (modalEl, backdropEl) => { modalEl.classList.add('scale-95', 'opacity-0'); setTimeout(() => backdropEl.classList.add('hidden'), 200); };
+        
+        // --- RENDERING & UI LOGIC ---
+        const calculateTotals = () => {
+            const grandTotal = state.quoteItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            dom.grandTotalEl.textContent = formatCurrency(grandTotal);
+        };
+
+        const renderQuoteItems = () => {
+            dom.quoteItemsBody.innerHTML = '';
+            if (!state.quoteItems || state.quoteItems.length === 0) { 
+                if (dom.emptyRow) { // Ensure emptyRow exists before manipulating it
+                    dom.emptyRow.querySelector('td').textContent = "No items added yet.";
+                    dom.quoteItemsBody.appendChild(dom.emptyRow);
+                }
+            } else { 
+                state.quoteItems.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    const hasDiscount = item.discountAmount && item.discountAmount !== 0;
+
+                    let descriptionHtml = `<div class="font-medium text-gray-900">${item.name}</div><div class="text-sm text-gray-500">${item.type}</div>`;
+                    if (hasDiscount && item.discountReason) {
+                        descriptionHtml += `<div class="text-xs text-purple-700 italic pl-2">- ${item.discountReason}</div>`;
+                    }
+                    const isPlan = item.type === 'Software' && data.softwarePlans[item.name.split(' (')[0]];
+                    if (isPlan) {
+                        const currentCycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly';
+                        const newCycle = currentCycle === 'monthly' ? 'yearly' : 'monthly';
+                        descriptionHtml += `<button class="switch-cycle-btn text-xs text-blue-600 hover:underline pl-2" data-index="${index}" data-new-cycle="${newCycle}">(switch to ${newCycle})</button>`;
+                    }
+                    
+                    let priceHtml = `<button class="add-discount-btn text-blue-600 hover:underline" data-index="${index}">${formatCurrency(item.price)}</button>`;
+                    if (hasDiscount) {
+                        priceHtml = `<div class="flex flex-col items-end">
+                                        <span class="line-through text-gray-500 text-xs">${formatCurrency(item.basePrice)}</span>
+                                        <button class="edit-discount-btn text-purple-600 hover:underline font-semibold" data-index="${index}">${formatCurrency(item.price)}</button>
+                                     </div>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-4 py-4 whitespace-nowrap">${descriptionHtml}</td>
+                        <td class="px-4 py-4 text-center"><input type="number" value="${item.qty}" min="1" class="quote-qty-input w-16 text-center border rounded-md py-1" data-index="${index}"></td>
+                        <td class="px-4 py-4 text-right">${priceHtml}</td>
+                        <td class="px-4 py-4 text-right font-semibold">${formatCurrency(item.price * item.qty)}</td>
+                        <td class="px-4 py-4 text-right"><button data-index="${index}" class="remove-item-btn text-red-500 hover:text-red-700 font-bold text-xl px-2">&times;</button></td>
+                    `;
+                    dom.quoteItemsBody.appendChild(tr);
+                });
+            }
+            calculateTotals();
+            syncCheckboxesOnLoad();
+        };
+        
+        const createPlanItem = (planName) => {
+            const id = 'plan_' + planName.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_]/g, '');
+            const row = document.createElement('div');
+            row.className = 'item-row p-2 rounded-md grid grid-cols-3 gap-2 items-center';
+            row.innerHTML = `<div class="col-span-2 flex items-center"><input type="checkbox" id="${id}" data-name="${planName}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 software-item"><label for="${id}" class="ml-2 text-sm text-gray-700 flex-grow cursor-pointer">${planName}</label></div><div class="col-span-1"><select class="billing-cycle-select hidden w-full text-xs p-1 border-gray-300 rounded-md"><option value="monthly">Monthly</option><option value="yearly" selected>Yearly</option></select></div>`;
+            const checkbox = row.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', () => { checkbox.closest('.item-row').querySelector('select').classList.toggle('hidden', !checkbox.checked); });
+            return row;
+        };
+
+        const createGenericItem = (item, type) => {
+            const row = document.createElement('div');
+            row.className = 'item-row p-2 rounded-md flex items-center';
+            row.innerHTML = `<input type="checkbox" id="${item.id}" data-id="${item.id}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 generic-item" data-type="${type}"><label for="${item.id}" class="ml-2 text-sm text-gray-700 cursor-pointer">${item.name}</label>`;
+            return row;
+        };
+
+        const populateForms = () => {
+            Object.keys(data.softwarePlans).forEach(planName => dom.softwareContainer.appendChild(createPlanItem(planName)));
+            data.marketplaceIntegrations.forEach(item => dom.softwareContainer.appendChild(createGenericItem(item, 'Software')));
+            data.mainHardwareItems.forEach(item => dom.mainHardwareContainer.appendChild(createGenericItem(item, 'Main Hardware')));
+            data.supplementaryHardwareItems.forEach(item => dom.supplementaryHardwareContainer.appendChild(createGenericItem(item, 'Supplementary Hardware')));
+            data.serviceItems.forEach(item => dom.servicesContainer.appendChild(createGenericItem(item, 'Service')));
+        };
+
+        const syncCheckboxesOnLoad = () => {
+            document.querySelectorAll('#itemSelectionForm input[type="checkbox"]').forEach(cb => cb.checked = false);
+            if (Array.isArray(state.quoteItems)) {
+                state.quoteItems.forEach(item => {
+                    let checkbox;
+                    if (item.type === 'Software' && data.softwarePlans[item.name.split(' (')[0]]) {
+                        const planName = item.name.split(' (')[0];
+                        checkbox = document.querySelector(`.software-item[data-name="${planName}"]`);
+                        if(checkbox) { const cycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly'; checkbox.closest('.item-row').querySelector('select').value = cycle; }
+                    } else { checkbox = document.getElementById(item.id); }
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        if(checkbox.classList.contains('software-item')) { checkbox.closest('.item-row').querySelector('.billing-cycle-select').classList.remove('hidden'); }
+                    }
+                });
+            }
+        };
+
+        // --- EVENT HANDLERS ---
+        const handleItemToggle = (e) => {
+            const checkbox = e.target;
+            if (!checkbox.matches('input[type="checkbox"]')) return;
+            const isChecked = checkbox.checked;
+            let newItemData;
+            if (checkbox.classList.contains('software-item')) {
+                const planName = checkbox.dataset.name;
+                const cycle = checkbox.closest('.item-row').querySelector('.billing-cycle-select').value;
+                newItemData = data.softwarePlans[planName][cycle];
+            } else if (checkbox.classList.contains('generic-item')) {
+                const itemId = checkbox.dataset.id;
+                const itemType = checkbox.dataset.type;
+                let sourceArray;
+                if (itemType === 'Software') sourceArray = data.marketplaceIntegrations;
+                else if (itemType === 'Main Hardware') sourceArray = data.mainHardwareItems;
+                else if (itemType === 'Supplementary Hardware') sourceArray = data.supplementaryHardwareItems;
+                else if (itemType === 'Service') sourceArray = data.serviceItems;
+                newItemData = sourceArray.find(i => i.id === itemId);
+            }
+            if (!newItemData) return;
+            const itemIndex = state.quoteItems.findIndex(item => item.id === newItemData.id);
+            if (isChecked) {
+                if (itemIndex === -1) {
+                    state.quoteItems.push({ ...newItemData, type: checkbox.classList.contains('software-item') ? 'Software' : checkbox.dataset.type, qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
+                }
+            } else {
+                if (itemIndex > -1) state.quoteItems.splice(itemIndex, 1);
+            }
+            renderQuoteItems(); // Re-render after state change
+        };
+        
+        const handleDetailsChange = (e) => {
+            if (!state.details) state.details = {};
+            state.details[e.target.id] = e.target.value;
+            // No need to save to firebase, data is held in state for generation
+        };
+
+        const handleSearch = () => {
+            const searchTerm = dom.itemSearchInput.value.toLowerCase().trim();
+            document.querySelectorAll('#itemSelectionForm > div[id$="-section"]').forEach(sectionEl => {
+                const items = sectionEl.querySelectorAll('.item-row'); let visibleItemsInSection = 0;
+                items.forEach(itemRow => {
+                    const itemName = itemRow.querySelector('label').textContent.toLowerCase();
+                    if (itemName.includes(searchTerm)) { itemRow.classList.remove('hidden'); visibleItemsInSection++; } else { itemRow.classList.add('hidden'); }
+                });
+                sectionEl.classList.toggle('hidden', visibleItemsInSection === 0 && searchTerm !== '');
+            });
+        };
+
+        const showDiscountModal = (itemIndex) => {
+            editingItemIndex = itemIndex; const item = state.quoteItems[editingItemIndex];
+            dom.itemDiscountReasonInput.value = item.discountReason || '';
+            dom.itemDiscountAmountInput.value = item.discountInput || '';
+            dom.discountModalRemoveBtn.classList.toggle('hidden', !item.discountAmount);
+            dom.discountModalBackdrop.classList.remove('hidden');
+            setTimeout(() => dom.discountModal.classList.remove('scale-95', 'opacity-0'), 10);
+        };
+        
+        const handleApplyDiscount = (e) => {
+            if(e) e.preventDefault();
+            const item = state.quoteItems[editingItemIndex]; if (!item) return;
+            const reason = dom.itemDiscountReasonInput.value.trim();
+            const amountStr = dom.itemDiscountAmountInput.value.trim(); let discountValue = 0;
+            if (amountStr.includes('%')) {
+                const percentage = parseFloat(amountStr.replace(/%/g, ''));
+                if (!isNaN(percentage)) { discountValue = (percentage / 100) * item.basePrice; }
+            } else { discountValue = parseFloat(amountStr); }
+            if (!isNaN(discountValue)) {
+                item.discountAmount = discountValue; item.price = item.basePrice + discountValue; item.discountReason = reason; item.discountInput = amountStr;
+            }
+            hideModal(dom.discountModal, dom.discountModalBackdrop);
+            renderQuoteItems(); // Re-render after state change
+        };
+
+        const handleRemoveDiscount = () => {
+            const item = state.quoteItems[editingItemIndex]; if (item) { item.price = item.basePrice; item.discountAmount = 0; item.discountReason = ''; item.discountInput = ''; }
+            hideModal(dom.discountModal, dom.discountModalBackdrop);
+            renderQuoteItems(); // Re-render after state change
+        };
+
+        const handleGenerateQuote = () => {
+            let finalTotal = 0; const quoteNumber = `Q-${Math.floor(100000 + Math.random() * 900000)}`;
+            const issuedDate = dom.quoteDateInput.value ? new Date(dom.quoteDateInput.value).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+            let expirationDate = new Date(); if(dom.quoteDateInput.value) expirationDate = new Date(dom.quoteDateInput.value); expirationDate.setDate(expirationDate.getDate() + 2);
+            const itemsHtml = state.quoteItems.map((item, index) => {
+                const hasDiscount = item.discountAmount && item.discountAmount !== 0; const lineTotal = item.price * item.qty; finalTotal += lineTotal;
+                return `<tr class="border-b"><td class="p-2 align-top text-sm">${index + 1}</td><td class="p-2 align-top text-sm">${item.name} ${hasDiscount ? `<br><span class="text-xs italic text-purple-700">- ${item.discountReason}</span>` : ''}</td><td class="p-2 align-top text-sm"></td><td class="p-2 text-center text-sm">${item.qty}</td><td class="p-2 align-top text-right text-sm">${formatCurrency(item.price)}</td><td class="p-2 align-top text-right text-sm font-semibold">${formatCurrency(lineTotal)}</td></tr>`;
+            }).join('');
+            const printContent = `
+                <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Quotation ${quoteNumber}</title><script src="https://cdn.tailwindcss.com"><\/script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family: 'Inter', sans-serif;}</style></head>
+                <body class="p-8 text-xs text-gray-800"><h1 class="text-3xl font-bold text-gray-900 mb-6">QUOTATION</h1><div class="grid grid-cols-2 gap-8 mb-8"><div><h2 class="font-bold mb-2">Quote To:</h2><p class="font-semibold">${dom.clientNameInput.value || 'N/A'}</p><p>${dom.companyNameInput.value || ''}</p><p>Contact: ${dom.contactNumberInput.value || 'N/A'}</p><p>Email: ${dom.contactEmailInput.value || 'N/A'}</p></div><div class="text-right"><p><span class="font-semibold">Quote Number:</span> ${quoteNumber}</p><p><span class="font-semibold">Issued Date:</span> ${issuedDate}</p><p><span class="font-semibold">Expiration Date:</span> ${expirationDate.toLocaleDateString('en-GB')}</p></div></div><table class="min-w-full"><thead class="bg-gray-100"><tr><th class="p-2 text-left font-semibold">No.</th><th class="p-2 text-left font-semibold">Item</th><th class="p-2 text-left font-semibold">Description</th><th class="p-2 text-center font-semibold">Quantity</th><th class="p-2 text-right font-semibold">Amount (MYR)</th><th class="p-2 text-right font-semibold">Total (MYR)</th></tr></thead><tbody>${itemsHtml}</tbody></table><div class="flex justify-end mt-6"><div class="w-1/3 space-y-2"><div class="flex justify-between text-base font-bold border-t pt-2 mt-2"><span class="">Total Payable:</span><span>${formatCurrency(finalTotal)}</span></div></div></div><div class="mt-12 text-gray-600"><p class="font-semibold mb-4">Best Regards,<br>${dom.consultantNameInput.value || 'Your Name'}</p><h3 class="font-bold text-gray-800 mb-2">Terms and Conditions</h3><ol class="list-decimal list-inside space-y-1 text-xs"><li>Subscription comes with free information available in our Knowledge Base. Live online training is sold separately.</li><li>No changes will be made to the orders/invoices once full payment has been received.</li><li>All deposits/invoices paid are not refundable and not transferable once received.</li><li>Hardware(s) will be delivered within 3 working days for Klang Valley and within 7 working days for the rest of Malaysia.</li><li>Your POS hardware can only be used for the StoreHub application.</li><li>The validity of any purchased Onboarding service(s) is only 90 days from the date of payment confirmation.</li></ol><h3 class="font-bold text-gray-800 mt-4 mb-2">Software Subscription Policy:</h3><ol class="list-decimal list-inside space-y-1 text-xs"><li>For software subscription purchased, you are encouraged to activate your subscription plan within 90 days from the date of invoice or the subscription plan will be automatically activated for you by the end of the 90 days period.</li></ol><h3 class="font-bold text-gray-800 mt-4 mb-2">Hardware Warranty Policy:</h3><ol class="list-decimal list-inside space-y-1 text-xs"><li>StoreHub's Limited Hardware Warranty period is within One (1) year of receiving hardware, excluding accessories and consumables.</li></ol><p class="mt-4">For more information, refer to our full Terms and Conditions at https://www.storehub.com/my/terms-conditions/</p><div class="mt-6 border-t pt-4"><p class="font-bold">Kindly put the Quote Number as payment reference when transferring through DuitNow:</p><p><span class="font-semibold">Bank Name:</span> CIMB Bank Berhad</p><p><span class="font-semibold">Account Name:</span> StoreHub Sdn Bhd</p><p><span class="font-semibold">Bank Account No:</span> 8002661066</p></div></div></body></html>`;
+            const printWindow = window.open('', '_blank'); printWindow.document.write(printContent); printWindow.document.close(); setTimeout(() => printWindow.print(), 500);
+        };
+
+        const handleRemoveItem = (e) => { const button = e.target.closest('.remove-item-btn'); if (button) { const index = parseInt(button.dataset.index, 10); state.quoteItems.splice(index, 1); renderQuoteItems(); } };
+        const handleClearQuote = () => { showConfirmationModal('Clear Entire Quote', 'This will remove all items from the current session.', () => { state.quoteItems = []; renderQuoteItems(); }); };
+        const handleQuantityChange = (e) => { const input = e.target; const newQty = parseInt(input.value); const index = input.dataset.index; if (state.quoteItems[index] && !isNaN(newQty) && newQty > 0) { state.quoteItems[index].qty = newQty; renderQuoteItems(); } };
+        
+        const handleCycleSwitch = (e) => {
+            const button = e.target; const index = button.dataset.index; const newCycle = button.dataset.newCycle; const item = state.quoteItems[index]; const basePlanName = item.name.split(' (')[0]; const newPlanData = data.softwarePlans[basePlanName][newCycle];
+            if(newPlanData){ const oldQty = item.qty; state.quoteItems[index] = { ...item, ...newPlanData, qty: oldQty, basePrice: newPlanData.price, price: newPlanData.price, discountAmount: 0, discountReason: '', discountInput: '' }; renderQuoteItems(); }
+        };
+        
+        // --- MAIN INITIALIZATION FUNCTION ---
+        function main() {
+            // Populate the static item lists from the catalog
+            populateForms();
+            // Render the initial empty state of the quote table
+            renderQuoteItems();
+
+            // Set the quote date to today by default
+            dom.quoteDateInput.valueAsDate = new Date();
+            
+            // --- BIND ALL EVENT LISTENERS ---
+            dom.selectionForm.addEventListener('change', handleItemToggle);
+            dom.itemSearchInput.addEventListener('input', handleSearch);
+            dom.discountForm.addEventListener('submit', handleApplyDiscount);
+
+            // Listeners for the quote table (using event delegation)
+            dom.quoteItemsBody.addEventListener('click', (e) => {
+                if (e.target.closest('.add-discount-btn') || e.target.closest('.edit-discount-btn')) { showDiscountModal(e.target.closest('button').dataset.index); } 
+                else if (e.target.closest('.remove-item-btn')) { handleRemoveItem(e); } 
+                else if (e.target.closest('.switch-cycle-btn')) { handleCycleSwitch(e); }
+            });
+            dom.quoteItemsBody.addEventListener('change', (e) => { if (e.target.classList.contains('quote-qty-input')) { handleQuantityChange(e); } });
+
+            // Listeners for modals and main action buttons
+            dom.discountModalCancelBtn.addEventListener('click', () => hideModal(dom.discountModal, dom.discountModalBackdrop));
+            dom.discountModalRemoveBtn.addEventListener('click', handleRemoveDiscount);
+            dom.clearQuoteBtn.addEventListener('click', handleClearQuote);
+            dom.generateQuoteBtn.addEventListener('click', handleGenerateQuote);
+
+            // Listeners for details section (data is held in `state` object)
+            dom.clientNameInput.addEventListener('change', handleDetailsChange);
+            dom.companyNameInput.addEventListener('change', handleDetailsChange);
+            dom.contactNumberInput.addEventListener('change', handleDetailsChange);
+            dom.contactEmailInput.addEventListener('change', handleDetailsChange);
+            dom.consultantNameInput.addEventListener('change', handleDetailsChange);
+            dom.quoteDateInput.addEventListener('change', handleDetailsChange);
+        }
+
+        // Start the application
+        main();
+
+    </script>
+</body>
+</html>
