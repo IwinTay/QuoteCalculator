@@ -278,12 +278,6 @@
             // Create checkboxes for non-delivery services
             otherServiceItems.forEach(item => dom.servicesContainer.appendChild(createGenericItem(item, 'Service')));
             
-            // Create a "No Delivery" radio option
-            const noDeliveryDiv = document.createElement('div');
-            noDeliveryDiv.className = 'item-row p-2 rounded-md flex items-center';
-            noDeliveryDiv.innerHTML = `<input type="radio" id="no_delivery" name="delivery_option" data-id="no_delivery" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 radio-item" data-type="Service" checked><label for="no_delivery" class="ml-2 text-sm text-gray-700 cursor-pointer">No Delivery</label>`;
-            dom.servicesContainer.appendChild(noDeliveryDiv);
-
             // Create radio buttons for delivery options
             deliveryItems.forEach(item => dom.servicesContainer.appendChild(createRadioOption(item, 'delivery_option')));
         };
@@ -313,8 +307,8 @@
                     const radio = document.getElementById(deliveryItemInQuote.id);
                     if (radio) radio.checked = true;
                 } else {
-                    const noDeliveryRadio = document.getElementById('no_delivery');
-                    if (noDeliveryRadio) noDeliveryRadio.checked = true;
+                    // If no delivery item is in the quote, ensure no radio button is checked
+                    document.querySelectorAll('input[name="delivery_option"]').forEach(radio => radio.checked = false);
                 }
             }
         };
@@ -332,13 +326,11 @@
                     state.quoteItems.splice(existingDeliveryIndex, 1);
                 }
                 
-                // Add the new one, but only if it's not the "No Delivery" option
+                // Add the new one
                 const itemId = input.dataset.id;
-                if (itemId !== 'no_delivery') {
-                    const newItemData = data.serviceItems.find(i => i.id === itemId);
-                    if (newItemData) {
-                        state.quoteItems.push({ ...newItemData, type: 'Service', qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
-                    }
+                const newItemData = data.serviceItems.find(i => i.id === itemId);
+                if (newItemData) {
+                    state.quoteItems.push({ ...newItemData, type: 'Service', qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
                 }
             } 
             // Handle standard checkboxes
