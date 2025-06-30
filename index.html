@@ -67,6 +67,18 @@
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Services</h3>
                             <div id="services-items-container" class="space-y-2 max-h-48 overflow-y-scroll border border-gray-200 rounded-lg p-2"></div>
                         </div>
+                        <!-- Custom Item Section -->
+                        <div id="custom-item-section">
+                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Custom Item</h3>
+                             <div class="space-y-2 border border-gray-200 rounded-lg p-2">
+                                 <input type="text" id="customItemName" placeholder="Item Name" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm text-sm">
+                                 <div class="flex space-x-2">
+                                     <input type="number" id="customItemPrice" placeholder="Price" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm text-sm">
+                                     <input type="text" id="customItemUnit" placeholder="Unit (e.g., per hour)" class="block w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md shadow-sm text-sm">
+                                 </div>
+                                 <button type="button" id="addCustomItemBtn" class="w-full mt-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm">Add Custom Item</button>
+                             </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -150,9 +162,14 @@
                 'NCS': { yearly: { id: 'ncs_yearly', name: 'NCS (Yearly)', price: 250.00 }, monthly: { id: 'ncs_monthly', name: 'NCS (Monthly)', price: 25.00 } }
             },
             marketplaceIntegrations: [ { id: 'mp_standard', name: 'Marketplace Integration Standard', price: 1056.00 }, { id: 'mp_advance', name: 'Marketplace Integration Advance', price: 4656.00 } ],
-            mainHardwareItems: [ { id: 'falcon_1', name: 'Falcon 1', price: 1890.00 }, { id: 'sunmi_d3_pro', name: 'Sunmi D3 Pro', price: 1690.00 }, { id: 'sunmi_d3_mini', name: 'Sunmi D3 Mini', price: 1890.00 } ],
+            mainHardwareItems: [ { id: 'falcon_1', name: 'Falcon 1', price: 1890.00 }, { id: 'sunmi_d3_pro', name: 'Sunmi D3 Pro', price: 2490.00 }, { id: 'sunmi_d3_mini', name: 'Sunmi D3 Mini', price: 1890.00 } ],
             supplementaryHardwareItems: [ { id: 'swan_1k', name: 'Swan 1K', price: 1400.00 }, { id: 'mi_stick', name: 'Mi Stick', price: 199.00 }, { id: 'table_mount', name: 'Table Mount', price: 50.00 }, { id: 'wall_mount', name: 'Wall Mount', price: 35.00 }, { id: 'thermal_printer', name: 'Thermal Printer', price: 480.00 }, { id: 'bixolon_printer', name: 'Bixolon Printer', price: 900.00 }, { id: 'cash_drawer', name: 'Cash Drawer', price: 260.00 }, { id: 'sunmi_scanner', name: 'Sunmi Scanner', price: 200.00 }, { id: 'webcam', name: 'Webcam', price: 100.00 }, { id: 'tp_link_omada', name: 'TP Link Omada Router', price: 450.00 }, { id: 'network_switch', name: 'Network Switch', price: 149.00 }, { id: 'tp_link_ap', name: 'TP Link Access Point', price: 450.00 } ],
-            serviceItems: [ { id: 'on-site_onboarding', name: 'On-site Onboarding', price: 990.00 }, { id: 'remote_onboarding', name: 'Remote Onboarding', price: 690.00 }, { id: 'delivery_charges', name: 'Delivery Charges', price: 45.00 }],
+            serviceItems: [ 
+                { id: 'on-site_onboarding', name: 'On-site Onboarding', price: 990.00 }, 
+                { id: 'remote_onboarding', name: 'Remote Onboarding', price: 690.00 },
+                { id: 'delivery_charges_wm', name: 'Delivery Charges (WM)', price: 45.00 },
+                { id: 'delivery_charges_em', name: 'Delivery Charges (EM)', price: 250.00 }
+            ],
         };
         
         // --- DOM ELEMENT REFERENCES ---
@@ -163,6 +180,7 @@
             discountModalBackdrop: document.getElementById('discount-modal-backdrop'), discountModal: document.getElementById('discount-modal'), discountForm: document.getElementById('discount-form'), itemDiscountReasonInput: document.getElementById('itemDiscountReason'), itemDiscountAmountInput: document.getElementById('itemDiscountAmount'), discountModalCancelBtn: document.getElementById('discount-modal-cancel-btn'), discountModalRemoveBtn: document.getElementById('discount-modal-remove-btn'),
             softwareContainer: document.getElementById('software-items-container'), mainHardwareContainer: document.getElementById('main-hardware-items-container'), supplementaryHardwareContainer: document.getElementById('supplementary-hardware-items-container'), servicesContainer: document.getElementById('services-items-container'),
             clientNameInput: document.getElementById('clientName'), companyNameInput: document.getElementById('companyName'), contactNumberInput: document.getElementById('contactNumber'), contactEmailInput: document.getElementById('contactEmail'), consultantNameInput: document.getElementById('consultantName'), quoteDateInput: document.getElementById('quoteDate'),
+            customItemName: document.getElementById('customItemName'), customItemPrice: document.getElementById('customItemPrice'), customItemUnit: document.getElementById('customItemUnit'), addCustomItemBtn: document.getElementById('addCustomItemBtn'),
         };
         
         // --- UI & UTILITY FUNCTIONS ---
@@ -239,68 +257,158 @@
             return row;
         };
 
+        const createRadioOption = (item, name) => {
+            const row = document.createElement('div');
+            row.className = 'item-row p-2 rounded-md flex items-center';
+            row.innerHTML = `<input type="radio" id="${item.id}" name="${name}" data-id="${item.id}" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 radio-item" data-type="Service"><label for="${item.id}" class="ml-2 text-sm text-gray-700 cursor-pointer">${item.name}</label>`;
+            return row;
+        };
+
         const populateForms = () => {
+            // Populate standard items
             Object.keys(data.softwarePlans).forEach(planName => dom.softwareContainer.appendChild(createPlanItem(planName)));
             data.marketplaceIntegrations.forEach(item => dom.softwareContainer.appendChild(createGenericItem(item, 'Software')));
             data.mainHardwareItems.forEach(item => dom.mainHardwareContainer.appendChild(createGenericItem(item, 'Main Hardware')));
             data.supplementaryHardwareItems.forEach(item => dom.supplementaryHardwareContainer.appendChild(createGenericItem(item, 'Supplementary Hardware')));
-            data.serviceItems.forEach(item => dom.servicesContainer.appendChild(createGenericItem(item, 'Service')));
+            
+            // Handle services: separate delivery from others
+            const deliveryItems = data.serviceItems.filter(item => item.id.startsWith('delivery_charges'));
+            const otherServiceItems = data.serviceItems.filter(item => !item.id.startsWith('delivery_charges'));
+            
+            // Create checkboxes for non-delivery services
+            otherServiceItems.forEach(item => dom.servicesContainer.appendChild(createGenericItem(item, 'Service')));
+            
+            // Create a "No Delivery" radio option
+            const noDeliveryDiv = document.createElement('div');
+            noDeliveryDiv.className = 'item-row p-2 rounded-md flex items-center';
+            noDeliveryDiv.innerHTML = `<input type="radio" id="no_delivery" name="delivery_option" data-id="no_delivery" class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 radio-item" data-type="Service" checked><label for="no_delivery" class="ml-2 text-sm text-gray-700 cursor-pointer">No Delivery</label>`;
+            dom.servicesContainer.appendChild(noDeliveryDiv);
+
+            // Create radio buttons for delivery options
+            deliveryItems.forEach(item => dom.servicesContainer.appendChild(createRadioOption(item, 'delivery_option')));
         };
 
         const syncCheckboxesOnLoad = () => {
+            // Uncheck all standard checkboxes
             document.querySelectorAll('#itemSelectionForm input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
             if (Array.isArray(state.quoteItems)) {
+                // Check items that are in the state
                 state.quoteItems.forEach(item => {
-                    let checkbox;
-                    if (item.type === 'Software' && data.softwarePlans[item.name.split(' (')[0]]) {
-                        const planName = item.name.split(' (')[0];
-                        checkbox = document.querySelector(`.software-item[data-name="${planName}"]`);
-                        if(checkbox) { const cycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly'; checkbox.closest('.item-row').querySelector('select').value = cycle; }
-                    } else { checkbox = document.getElementById(item.id); }
-                    if (checkbox) {
-                        checkbox.checked = true;
-                        if(checkbox.classList.contains('software-item')) { checkbox.closest('.item-row').querySelector('.billing-cycle-select').classList.remove('hidden'); }
+                    // Handle standard checkboxes
+                    const checkbox = document.getElementById(item.id);
+                    if (checkbox && checkbox.type === 'checkbox') {
+                         checkbox.checked = true;
+                         if(checkbox.classList.contains('software-item')) {
+                             checkbox.closest('.item-row').querySelector('.billing-cycle-select').classList.remove('hidden');
+                             const cycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly';
+                             checkbox.closest('.item-row').querySelector('select').value = cycle;
+                         }
                     }
                 });
+
+                // Handle delivery radio buttons
+                const deliveryItemInQuote = state.quoteItems.find(item => item.id.startsWith('delivery_charges_'));
+                if (deliveryItemInQuote) {
+                    const radio = document.getElementById(deliveryItemInQuote.id);
+                    if (radio) radio.checked = true;
+                } else {
+                    const noDeliveryRadio = document.getElementById('no_delivery');
+                    if (noDeliveryRadio) noDeliveryRadio.checked = true;
+                }
             }
         };
 
         // --- EVENT HANDLERS ---
-        const handleItemToggle = (e) => {
-            const checkbox = e.target;
-            if (!checkbox.matches('input[type="checkbox"]')) return;
-            const isChecked = checkbox.checked;
-            let newItemData;
-            if (checkbox.classList.contains('software-item')) {
-                const planName = checkbox.dataset.name;
-                const cycle = checkbox.closest('.item-row').querySelector('.billing-cycle-select').value;
-                newItemData = data.softwarePlans[planName][cycle];
-            } else if (checkbox.classList.contains('generic-item')) {
-                const itemId = checkbox.dataset.id;
-                const itemType = checkbox.dataset.type;
-                let sourceArray;
-                if (itemType === 'Software') sourceArray = data.marketplaceIntegrations;
-                else if (itemType === 'Main Hardware') sourceArray = data.mainHardwareItems;
-                else if (itemType === 'Supplementary Hardware') sourceArray = data.supplementaryHardwareItems;
-                else if (itemType === 'Service') sourceArray = data.serviceItems;
-                newItemData = sourceArray.find(i => i.id === itemId);
-            }
-            if (!newItemData) return;
-            const itemIndex = state.quoteItems.findIndex(item => item.id === newItemData.id);
-            if (isChecked) {
-                if (itemIndex === -1) {
-                    state.quoteItems.push({ ...newItemData, type: checkbox.classList.contains('software-item') ? 'Software' : checkbox.dataset.type, qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
+        const handleItemSelection = (e) => {
+            const input = e.target;
+            if (!input.matches('input[type="checkbox"], input[type="radio"]')) return;
+
+            // Handle radio buttons for delivery
+            if (input.classList.contains('radio-item')) {
+                // Always remove any existing delivery charge
+                const existingDeliveryIndex = state.quoteItems.findIndex(item => item.id.startsWith('delivery_charges_'));
+                if (existingDeliveryIndex > -1) {
+                    state.quoteItems.splice(existingDeliveryIndex, 1);
                 }
-            } else {
-                if (itemIndex > -1) state.quoteItems.splice(itemIndex, 1);
+                
+                // Add the new one, but only if it's not the "No Delivery" option
+                const itemId = input.dataset.id;
+                if (itemId !== 'no_delivery') {
+                    const newItemData = data.serviceItems.find(i => i.id === itemId);
+                    if (newItemData) {
+                        state.quoteItems.push({ ...newItemData, type: 'Service', qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
+                    }
+                }
+            } 
+            // Handle standard checkboxes
+            else if (input.type === 'checkbox') {
+                const isChecked = input.checked;
+                let newItemData;
+                if (input.classList.contains('software-item')) {
+                    const planName = input.dataset.name;
+                    const cycle = input.closest('.item-row').querySelector('.billing-cycle-select').value;
+                    newItemData = data.softwarePlans[planName][cycle];
+                } else if (input.classList.contains('generic-item')) {
+                    const itemId = input.dataset.id;
+                    const itemType = input.dataset.type;
+                    let sourceArray;
+                    if (itemType === 'Software') sourceArray = data.marketplaceIntegrations;
+                    else if (itemType === 'Main Hardware') sourceArray = data.mainHardwareItems;
+                    else if (itemType === 'Supplementary Hardware') sourceArray = data.supplementaryHardwareItems;
+                    else if (itemType === 'Service') sourceArray = data.serviceItems;
+                    newItemData = sourceArray.find(i => i.id === itemId);
+                }
+                
+                if (!newItemData) return;
+                const itemIndex = state.quoteItems.findIndex(item => item.id === newItemData.id);
+                if (isChecked) {
+                    if (itemIndex === -1) {
+                        state.quoteItems.push({ ...newItemData, type: input.dataset.type, qty: 1, basePrice: newItemData.price, price: newItemData.price, discountAmount: 0, discountReason: '', discountInput: '' });
+                    }
+                } else {
+                    if (itemIndex > -1) state.quoteItems.splice(itemIndex, 1);
+                }
             }
-            renderQuoteItems(); // Re-render after state change
+
+            renderQuoteItems(); // Re-render after any selection change
         };
         
+        const handleAddCustomItem = () => {
+            const name = dom.customItemName.value.trim();
+            const price = parseFloat(dom.customItemPrice.value);
+            const unit = dom.customItemUnit.value.trim();
+            
+            let finalName = name;
+            if(unit) {
+                finalName = `${name} (${unit})`;
+            }
+
+            if (name && !isNaN(price) && price >= 0) {
+                const customItem = {
+                    id: `custom_${Date.now()}`, // Unique ID for the custom item
+                    name: finalName,
+                    price: price,
+                    basePrice: price, // Base price is the same as initial price
+                    qty: 1,
+                    type: 'Custom',
+                    discountAmount: 0,
+                    discountReason: '',
+                    discountInput: ''
+                };
+                state.quoteItems.push(customItem);
+                renderQuoteItems();
+
+                // Clear the input fields
+                dom.customItemName.value = '';
+                dom.customItemPrice.value = '';
+                dom.customItemUnit.value = '';
+            }
+        };
+
         const handleDetailsChange = (e) => {
             if (!state.details) state.details = {};
             state.details[e.target.id] = e.target.value;
-            // No need to save to firebase, data is held in state for generation
         };
 
         const handleSearch = () => {
@@ -337,13 +445,13 @@
                 item.discountAmount = discountValue; item.price = item.basePrice + discountValue; item.discountReason = reason; item.discountInput = amountStr;
             }
             hideModal(dom.discountModal, dom.discountModalBackdrop);
-            renderQuoteItems(); // Re-render after state change
+            renderQuoteItems(); 
         };
 
         const handleRemoveDiscount = () => {
             const item = state.quoteItems[editingItemIndex]; if (item) { item.price = item.basePrice; item.discountAmount = 0; item.discountReason = ''; item.discountInput = ''; }
             hideModal(dom.discountModal, dom.discountModalBackdrop);
-            renderQuoteItems(); // Re-render after state change
+            renderQuoteItems();
         };
 
         const handleGenerateQuote = () => {
@@ -380,9 +488,10 @@
             dom.quoteDateInput.valueAsDate = new Date();
             
             // --- BIND ALL EVENT LISTENERS ---
-            dom.selectionForm.addEventListener('change', handleItemToggle);
+            dom.selectionForm.addEventListener('change', handleItemSelection);
             dom.itemSearchInput.addEventListener('input', handleSearch);
             dom.discountForm.addEventListener('submit', handleApplyDiscount);
+            dom.addCustomItemBtn.addEventListener('click', handleAddCustomItem);
 
             // Listeners for the quote table (using event delegation)
             dom.quoteItemsBody.addEventListener('click', (e) => {
@@ -398,7 +507,7 @@
             dom.clearQuoteBtn.addEventListener('click', handleClearQuote);
             dom.generateQuoteBtn.addEventListener('click', handleGenerateQuote);
 
-            // Listeners for details section (data is held in `state` object)
+            // Listeners for details section
             dom.clientNameInput.addEventListener('change', handleDetailsChange);
             dom.companyNameInput.addEventListener('change', handleDetailsChange);
             dom.contactNumberInput.addEventListener('change', handleDetailsChange);
