@@ -206,18 +206,38 @@
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50';
                     const hasDiscount = item.discountAmount && item.discountAmount !== 0;
-
-                    let descriptionHtml = `<div class="font-medium text-gray-900">${item.name}</div><div class="text-sm text-gray-500">${item.type}</div>`;
-                    if (hasDiscount && item.discountReason) {
-                        descriptionHtml += `<div class="text-xs text-purple-700 italic pl-2">- ${item.discountReason}</div>`;
-                    }
-                    const isPlan = item.type === 'Software' && data.softwarePlans[item.name.split(' (')[0]];
-                    if (isPlan) {
-                        const currentCycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly';
-                        const newCycle = currentCycle === 'monthly' ? 'yearly' : 'monthly';
-                        descriptionHtml += `<button class="switch-cycle-btn text-xs text-blue-600 hover:underline pl-2" data-index="${index}" data-new-cycle="${newCycle}">(switch to ${newCycle})</button>`;
-                    }
                     
+                    let descriptionHtml;
+                    const isPlan = item.type === 'Software' && data.softwarePlans[item.name.split(' (')[0]];
+
+                    if (isPlan) {
+                        const basePlanName = item.name.split(' (')[0];
+                        const currentCycle = item.name.includes('(Monthly)') ? 'monthly' : 'yearly';
+                        
+                        const cycleSelector = `
+                            <select class="quote-cycle-select mt-2 w-full text-xs p-1 border-gray-300 rounded-md bg-white" data-index="${index}">
+                                <option value="monthly" ${currentCycle === 'monthly' ? 'selected' : ''}>Monthly</option>
+                                <option value="yearly" ${currentCycle === 'yearly' ? 'selected' : ''}>Yearly</option>
+                            </select>
+                        `;
+                        
+                        descriptionHtml = `
+                            <div class="font-medium text-gray-900">${basePlanName}</div>
+                            <div class="text-sm text-gray-500">${item.type}</div>
+                            ${cycleSelector}
+                        `;
+                    } else {
+                        descriptionHtml = `
+                            <div class="font-medium text-gray-900">${item.name}</div>
+                            <div class="text-sm text-gray-500">${item.type}</div>
+                        `;
+                    }
+
+                    // Add discount reason if it exists, for ANY item type
+                    if (hasDiscount && item.discountReason) {
+                        descriptionHtml += `<div class="text-xs text-purple-700 italic mt-1 pl-2">- ${item.discountReason}</div>`;
+                    }
+
                     let priceHtml = `<button class="add-discount-btn text-blue-600 hover:underline" data-index="${index}">${formatCurrency(item.price)}</button>`;
                     if (hasDiscount) {
                         priceHtml = `<div class="flex flex-col items-end">
@@ -227,11 +247,11 @@
                     }
 
                     tr.innerHTML = `
-                        <td class="px-4 py-4 whitespace-nowrap">${descriptionHtml}</td>
-                        <td class="px-4 py-4 text-center"><input type="number" value="${item.qty}" min="1" class="quote-qty-input w-16 text-center border rounded-md py-1" data-index="${index}"></td>
-                        <td class="px-4 py-4 text-right">${priceHtml}</td>
-                        <td class="px-4 py-4 text-right font-semibold">${formatCurrency(item.price * item.qty)}</td>
-                        <td class="px-4 py-4 text-right"><button data-index="${index}" class="remove-item-btn text-red-500 hover:text-red-700 font-bold text-xl px-2">&times;</button></td>
+                        <td class="px-4 py-4 align-top">${descriptionHtml}</td>
+                        <td class="px-4 py-4 text-center align-top"><input type="number" value="${item.qty}" min="1" class="quote-qty-input w-16 text-center border rounded-md py-1" data-index="${index}"></td>
+                        <td class="px-4 py-4 text-right align-top">${priceHtml}</td>
+                        <td class="px-4 py-4 text-right align-top font-semibold">${formatCurrency(item.price * item.qty)}</td>
+                        <td class="px-4 py-4 text-right align-top"><button data-index="${index}" class="remove-item-btn text-red-500 hover:text-red-700 font-bold text-xl px-2">&times;</button></td>
                     `;
                     dom.quoteItemsBody.appendChild(tr);
                 });
@@ -244,7 +264,8 @@
             const id = 'plan_' + planName.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_]/g, '');
             const row = document.createElement('div');
             row.className = 'item-row p-2 rounded-md grid grid-cols-3 gap-2 items-center';
-            row.innerHTML = `<div class="col-span-2 flex items-center"><input type="checkbox" id="${id}" data-name="${planName}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 software-item"><label for="${id}" class="ml-2 text-sm text-gray-700 flex-grow cursor-pointer">${planName}</label></div><div class="col-span-1"><select class="billing-cycle-select hidden w-full text-xs p-1 border-gray-300 rounded-md"><option value="monthly">Monthly</option><option value="yearly" selected>Yearly</option></select></div>`;
+            // ***** FIX: Added data-type="Software" to the input *****
+            row.innerHTML = `<div class="col-span-2 flex items-center"><input type="checkbox" id="${id}" data-name="${planName}" data-type="Software" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 software-item"><label for="${id}" class="ml-2 text-sm text-gray-700 flex-grow cursor-pointer">${planName}</label></div><div class="col-span-1"><select class="billing-cycle-select hidden w-full text-xs p-1 border-gray-300 rounded-md"><option value="monthly">Monthly</option><option value="yearly" selected>Yearly</option></select></div>`;
             const checkbox = row.querySelector('input[type="checkbox"]');
             checkbox.addEventListener('change', () => { checkbox.closest('.item-row').querySelector('select').classList.toggle('hidden', !checkbox.checked); });
             return row;
@@ -464,9 +485,30 @@
         const handleClearQuote = () => { showConfirmationModal('Clear Entire Quote', 'This will remove all items from the current session.', () => { state.quoteItems = []; renderQuoteItems(); }); };
         const handleQuantityChange = (e) => { const input = e.target; const newQty = parseInt(input.value); const index = input.dataset.index; if (state.quoteItems[index] && !isNaN(newQty) && newQty > 0) { state.quoteItems[index].qty = newQty; renderQuoteItems(); } };
         
-        const handleCycleSwitch = (e) => {
-            const button = e.target; const index = button.dataset.index; const newCycle = button.dataset.newCycle; const item = state.quoteItems[index]; const basePlanName = item.name.split(' (')[0]; const newPlanData = data.softwarePlans[basePlanName][newCycle];
-            if(newPlanData){ const oldQty = item.qty; state.quoteItems[index] = { ...item, ...newPlanData, qty: oldQty, basePrice: newPlanData.price, price: newPlanData.price, discountAmount: 0, discountReason: '', discountInput: '' }; renderQuoteItems(); }
+        const handleCycleChange = (e) => {
+            const select = e.target;
+            const index = select.dataset.index;
+            const newCycle = select.value;
+            const item = state.quoteItems[index];
+            const basePlanName = item.name.split(' (')[0];
+            
+            const newPlanData = data.softwarePlans[basePlanName][newCycle];
+            
+            if (newPlanData) {
+                // Preserve quantity but reset discount when switching, as price base changes
+                const oldQty = item.qty;
+                state.quoteItems[index] = { 
+                    ...item, // Keeps other properties like type
+                    ...newPlanData, // Overwrites id, name, price
+                    qty: oldQty,
+                    basePrice: newPlanData.price, 
+                    price: newPlanData.price, 
+                    discountAmount: 0, 
+                    discountReason: '', 
+                    discountInput: '' 
+                };
+                renderQuoteItems();
+            }
         };
         
         // --- MAIN INITIALIZATION FUNCTION ---
@@ -489,9 +531,14 @@
             dom.quoteItemsBody.addEventListener('click', (e) => {
                 if (e.target.closest('.add-discount-btn') || e.target.closest('.edit-discount-btn')) { showDiscountModal(e.target.closest('button').dataset.index); } 
                 else if (e.target.closest('.remove-item-btn')) { handleRemoveItem(e); } 
-                else if (e.target.closest('.switch-cycle-btn')) { handleCycleSwitch(e); }
             });
-            dom.quoteItemsBody.addEventListener('change', (e) => { if (e.target.classList.contains('quote-qty-input')) { handleQuantityChange(e); } });
+            dom.quoteItemsBody.addEventListener('change', (e) => { 
+                if (e.target.classList.contains('quote-qty-input')) { 
+                    handleQuantityChange(e); 
+                } else if (e.target.classList.contains('quote-cycle-select')) {
+                    handleCycleChange(e);
+                }
+            });
 
             // Listeners for modals and main action buttons
             dom.discountModalCancelBtn.addEventListener('click', () => hideModal(dom.discountModal, dom.discountModalBackdrop));
